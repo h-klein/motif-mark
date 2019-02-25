@@ -1,6 +1,6 @@
 # motif-mark
 
-+ Creates a to-scale diagram of motifs on a gene from a fasta file. Includes all IUPAC base identities.
++ Creates a to-scale diagram of motifs on a gene from a fasta file. Includes all IUPAC base identities. Also has color palette options, either random or basic coloration for up to eight motifs.
 
 + See test files folder for appropriate input file format.
 
