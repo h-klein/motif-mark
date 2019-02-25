@@ -28,9 +28,9 @@ gene_file = args.genes
 rand=args.random
 
 # Make sure the input is correct 
-if "fa" not in gene_file:
+if ".fa" not in gene_file:
     exit("Gene file must be .fa or .fasta")
-if "txt" not in motif_file:
+if ".txt" not in motif_file:
     exit("Motif file must be .txt")
 
 # Get the full sequence out of the fasta per gene and make sure it's all in one string. 
