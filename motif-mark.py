@@ -204,14 +204,14 @@ for gene in genes:
     
     # Figure Legend
     context.set_font_size(.06)
-    context.move_to(0.8, 0.25)
+    context.move_to(0.6, 0.25)
     context.show_text("Motifs")
     
     # exon legend entry
     context.select_font_face("Calibri", cairo.FONT_SLANT_NORMAL, 
     cairo.FONT_WEIGHT_NORMAL)
     context.set_font_size(.03)
-    context.move_to(0.8, 0.30)
+    context.move_to(0.6, 0.30)
     legend_pos = 0.30
     context.show_text("Exon")
     
@@ -254,13 +254,17 @@ for gene in genes:
         
         # legend entry
         context.set_font_size(.03)
-        context.move_to(0.8, legend_pos)
+        context.move_to(0.6, legend_pos)
         context.show_text(entry)
         
         # rectangle
         for location in gene_motif[gene][motif]:
+            # Sets lower limit for motif scaling just in case the gene is very large.
+            m_size = len(motif)/len(genes[gene])
             
-            context.rectangle(location,0.725,0.002,0.05)
+            # The line length is .9, width should be scaled to motif size
+            width = .9*m_size
+            context.rectangle(location,0.725,width,0.05)
             context.fill()
         
     
