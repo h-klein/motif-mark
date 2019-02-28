@@ -73,6 +73,7 @@ def build_regex(motif):
                  "N": "[AaTtGgCc]",
                  "Y": '[ctCT]',
                  "R": '[AaGg]',
+                 "S": '[GgCc]',
                  "W": '[AaTt]',
                  "K": '[GgTt]',
                  "M": '[AaCc]',
