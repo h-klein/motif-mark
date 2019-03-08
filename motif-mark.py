@@ -80,7 +80,8 @@ def build_regex(motif):
                  "B": '[CcGgTt]',
                  "D": '[AaGgTt]',
                  "H": "[AaCcTt]",
-                 "V": "[AaCcGg]"}
+                 "V": "[AaCcGg]",
+                 "U": "[Uu]"}
     
     for position in range(len(motif)):
         base = motif[position]
@@ -101,13 +102,13 @@ if len(motifs) > 8:
 
 
 # Break each gene into kmers for each motif and record where the motif occurred in these genes
-gene_motif = {}
+
 motif_loc = {}
-exon_loc={}
+exon_loc = {}
 for gene in genes:
     # Make sure to record on a one based counting system
     sequence = genes[gene]
-    
+    ##print(gene) #################################
     for motif in motifs:
         # record positions of found motifs
         
@@ -116,13 +117,14 @@ for gene in genes:
         regex = build_regex(motif)
         
         motif_loc[motif] = []
-        
+        ##print(motif)########################################
         for position in range(len(sequence)):
             kmer =  sequence[int(position):position+length]
             if re.match(regex, kmer):
                 position += 1
                 motif_loc[motif].append(position)
-    gene_motif[gene] = motif_loc
+                ##print(position)##############################
+                ##print(motif_loc)#################
         
         # For exon locations, if the position isn't one away from the last stored position,
         #then record the previous (end of last exon) and the current position (start of next 
@@ -134,9 +136,8 @@ for gene in genes:
     start = 0
     counter = 0
     exon = False
-    
       
-    exon_loc[gene] = {}    
+    exon_loc = {}    
     for position in range(len(sequence)):
         if sequence[position].isupper():
             position += 1
@@ -145,7 +146,7 @@ for gene in genes:
             if first:
                 exon_number += 1
                 
-                exon_loc[gene][exon_number] =[]
+                exon_loc[exon_number] =[]
                 start = position 
                 first=False
                 exon=True
@@ -154,43 +155,25 @@ for gene in genes:
             first = True
             # Stick locations of each exon for each gene into a dictionary of dictionaries
             if exon:
-                exon_loc[gene][exon_number].append(start)
-                exon_loc[gene][exon_number].append(start+counter-1)
+                exon_loc[exon_number].append(start)
+                exon_loc[exon_number].append(start+counter-1)
                 
                 counter=0
                 exon=False
-            
-                    
-# Scale the locations so they are easy to use in image drawing
-image_stats = {}
-for gene in genes:
+    ##print(exon_loc)##########################################            
+
+	# Draw the image for each gene 
+    width, height = 800, 500
+    name = "{}.svg"
+    # Scale the locations so they are easy to use in image drawing    
     length = len(genes[gene])
     scale = (1/length) * .9
     shift = 0.05
     
-    # Scale motif locations
-    for motif in gene_motif[gene]:
-        loc = []
-        for location in gene_motif[gene][motif]:
-            loc.append((location*scale)+shift)
-        gene_motif[gene][motif] = loc
-    # Scale exon locations
-    for exon in exon_loc[gene]:
-        loc = []
-        for location in exon_loc[gene][exon]:
-            loc.append((location*scale)+shift)
-        exon_loc[gene][exon] = loc
-    
-
-
-# Make an image using pycairo
-width, height = 800, 500
-name = "{}.svg"
-
-for gene in genes:
-    #create the coordinates to display your graphic, designate output
+    # Start with the parts that are the same for all genes
     file = name.format(gene)
     surface = cairo.SVGSurface(file,width, height)
+    
     #create the coordinates you will be drawing on (like a transparency) - you can create a transformation matrix
     context = cairo.Context(surface)
     context.scale(width,height) #will set your drawing surface to a 0.0-1.0 scale
@@ -216,23 +199,44 @@ for gene in genes:
     context.show_text("Exon")
     
     #Need to tell cairo where to put the brush, the color and width, and the shape you want it to draw
+    
     #draw a line
     context.set_line_width(0.005)
     context.move_to(shift,0.75)        #(x,y)
     context.line_to(1-shift,0.75)
     context.stroke()
+
+
+	# Scaling for location drawing   
+    length = len(genes[gene])
+    scale = (1/length) * .9
+    shift = 0.05
     
-    # Draw on exons
-    for exon in exon_loc[gene]:
-        start = exon_loc[gene][exon][0]
-        width = exon_loc[gene][exon][1]-start
+    # Scale Exons for each gene
+    for exon in exon_loc:
+        for location in range(len(exon_loc[exon])):
+            exon_loc[exon][location] = ((exon_loc[exon][location])*scale) + shift
+            
+    	# Draw on exons
+        start = exon_loc[exon][0]
+        size = exon_loc[exon][1]-start
         
-        # rectangle
-        context.rectangle(start,0.725,width,0.05)
-        context.fill()
+        # exon rectangle
+        context.set_line_width(0.1)
+        context.move_to(start,0.75)        #(x,y)
+        context.line_to((start+size),0.75)
+        context.stroke()
+
+    # Draw on motifs
     motif_number = 0
     palette =  (.8,0.1,0.1), (0.1,0.9,0.9), (.4, 0.9, 0.2), (.6,0.2,0.8), (.0, 0.0, 0.9), (.9, 0.9,0), (0.9,0.3,0.8), (.9,.6,0)
-    for motif in gene_motif[gene]:
+    
+    for motif in motif_loc:
+        # Scale motif locations
+        for position in range(len(motif_loc[motif])):
+            motif_loc[motif][position] = ((motif_loc[motif][position])*scale) + shift
+        
+        # Draw on motifs
         # Make color palette
         if rand:
             r = round(random.uniform(0,1),1)
@@ -257,20 +261,19 @@ for gene in genes:
         context.move_to(0.6, legend_pos)
         context.show_text(entry)
         
-        # rectangle
-        for location in gene_motif[gene][motif]:
-            # Sets lower limit for motif scaling just in case the gene is very large.
+        for location in motif_loc[motif]:
+            #print(location)
+            # scales motif size
             m_size = len(motif)/len(genes[gene])
             
             # The line length is .9, width should be scaled to motif size
-            width = .9*m_size
-            context.rectangle(location,0.725,width,0.05)
-            context.fill()
-        
+            s = .9*m_size
+            #context.rectangle(location,0.725,m_size,0.05)
+            #context.fill()
+            
+            context.set_line_width(0.05)
+            context.move_to(location,0.75)        #(x,y)
+            context.line_to((location+s),0.75)
+            context.stroke()
     
-    
-    #write out drawing
     surface.finish()
-
-
-
